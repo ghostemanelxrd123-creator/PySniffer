@@ -40,4 +40,6 @@
    ```bash
    git clone https://github.com/ghostemanelxrd123-creator/PySniffer.git
    cd PySniffer
+   sudo -E python3 PySniffer.py
+## 🔥 Приятного пользования!
    
