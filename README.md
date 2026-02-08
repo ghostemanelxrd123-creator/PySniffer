@@ -32,7 +32,7 @@
 *   **Интерфейс:** [PyQt6](https://pypi.org)
 
 ## 📸 Скриншоты
-| ![Main Window](screenshots/main.png) | ![In work](screenshots/in_work.png) |
+![Main Window](screenshots/main.png) ![In work](screenshots/in_work.png)
 
 ## 🚀 Установка
 
