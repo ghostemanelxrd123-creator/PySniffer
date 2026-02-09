@@ -53,7 +53,7 @@ class Ui_MainWindow(object):
         self.plainTextEdit = QtWidgets.QPlainTextEdit(parent=self.centralwidget)
         self.plainTextEdit.setGeometry(QtCore.QRect(10, 50, 621, 341))
         self.plainTextEdit.setObjectName("plainTextEdit")
-        
+
 
         self.pushButton = QtWidgets.QPushButton(parent=self.centralwidget)
         self.pushButton.setGeometry(QtCore.QRect(527, 400, 101, 41))
@@ -95,7 +95,7 @@ class Ui_MainWindow(object):
         self.label.setGeometry(QtCore.QRect(500, 10, 131, 31))
         self.label.setObjectName("label")
         self.label_2 = QtWidgets.QLabel(parent=self.centralwidget)
-        self.label_2.setGeometry(QtCore.QRect(350, 10, 190, 31))
+        self.label_2.setGeometry(QtCore.QRect(330, 10, 190, 31))
         self.label_2.setObjectName("label_2")
         self.plainTextEdit = QtWidgets.QPlainTextEdit(parent=self.centralwidget)
         self.plainTextEdit.setGeometry(QtCore.QRect(10, 50, 621, 341))
@@ -124,18 +124,34 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
         self.menubar.addAction(self.menuAbout.menuAction())
+        self.threadsnif = snifferthread()
+        self.threadsnif.textupdate.connect(self.addlog)
+        self.threadsnif.countupdate.connect(self.updatelabel)
+        self.stattimer = QtCore.QTimer()
+        self.stattimer.timeout.connect(self.calculate)
+        self.lastpacket = 0
+
+
+        self.pushButton.clicked.connect(self.startsniff)
+        self.pushButton_2.clicked.connect(self.stopsniff)
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
-        self.threadsnif = snifferthread()
-        self.threadsnif.textupdate.connect(self.addlog)
-        self.pushButton.clicked.connect(self.startsniff)
-        self.pushButton_2.clicked.connect(self.stopsniff)
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.retranslateUi(MainWindow)
+
+    def calculate(self):
+        current = self.threadsnif.counter
+        diff = current - self.lastpacket
+        pps = diff / 2
+        _translate = QtCore.QCoreApplication.translate
+        self.label_2.setText(_translate("MainWindow", f"Packet per second: {pps:.1f}"))
+        self.lastpacket = current
+        
 
     def startsniff(self):
         if not self.threadsnif.isRunning():
+            self.lastpacket = 0
+            self.label_2.setText("Packet per second: 0.0")
+            self.stattimer.start(2000)
             self.plainTextEdit.appendPlainText("Launch sniffing...")
             self.isrun = True
             self.threadsnif.showdns = self.checkBox.isChecked()
@@ -146,12 +162,21 @@ class Ui_MainWindow(object):
             self.threadsnif.start()
 
     def stopsniff(self):
+        self.lastpacket = 0
         self.threadsnif.stop()
+        self.stattimer.stop()
         if self.isrun:
-            self.plainTextEdit.appendPlainText("End sniffing...")
+            QtCore.QTimer.singleShot(500, self.sent)
             self.isrun = False
         else:
             return
+        
+    def sent(self):
+        self.plainTextEdit.appendPlainText("End sniffing...")
+
+    def updatelabel(self, count):
+        _translate = QtCore.QCoreApplication.translate
+        self.label.setText(_translate("MainWindow", f"Packet count: {count}"))
 
     def addlog(self, text):
         self.plainTextEdit.appendPlainText(text)
@@ -166,8 +191,8 @@ class Ui_MainWindow(object):
         self.checkBox_2.setText(_translate("MainWindow", "Http"))
         self.checkBox_3.setText(_translate(_translate("MainWindow", "Tcp"), "Tcp"))
         self.checkBox_4.setText(_translate(_translate("MainWindow", "Udp"), "Udp"))
-        self.label.setText(_translate("MainWindow", "Packet count: "))
-        self.label_2.setText(_translate("MainWindow", "Packet per second:"))
+        self.label.setText(_translate("MainWindow", "Packet count: 0"))
+        self.label_2.setText(_translate("MainWindow", "Packet per second: 0"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuHelp.setTitle(_translate("MainWindow", "Help"))
         self.menuAbout.setTitle(_translate("MainWindow", "About"))
@@ -179,6 +204,7 @@ class Ui_MainWindow(object):
 
 class snifferthread(QtCore.QThread):
     textupdate = QtCore.pyqtSignal(str)
+    countupdate = QtCore.pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
@@ -188,6 +214,7 @@ class snifferthread(QtCore.QThread):
         self.showhttp = False
         self.showtcp = False
         self.showudp = False
+        self.counter = 0
 
     def run(self):
         self.running = True
@@ -196,13 +223,16 @@ class snifferthread(QtCore.QThread):
 
     def stop(self):
         self.running = False
+        self.counter = 0
 
     def ppacket(self, pkt):
         if not pkt.haslayer(IP):
             return
 
+
+
         proto = "IP/Other"
-        
+
         if pkt.haslayer(DNS):
             proto = "DNS"
         elif pkt.haslayer(TCP):
@@ -223,7 +253,7 @@ class snifferthread(QtCore.QThread):
         elif proto == "UDP" and self.showudp:
             show = True
         elif proto == "IP/Other":
-            show = False 
+            show = False
 
         if show:
             src_port = ""
@@ -237,6 +267,8 @@ class snifferthread(QtCore.QThread):
 
             info = f"[{proto}] {pkt[IP].src}{src_port} -> {pkt[IP].dst}{dst_port}"
             self.textupdate.emit(info)
+            self.counter += 1
+            self.countupdate.emit(self.counter)
 
 if __name__ == "__main__":
     import sys
