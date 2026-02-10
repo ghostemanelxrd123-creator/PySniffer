@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🕵️‍♂️ PySniffer V1.5
+# 🕵️‍♂️ PySniffer V1.7
 **Modern, high-performance network traffic analyzer powered by Python.**
 
 [![Python Version](https://img.shields.io)](https://www.python.org)
