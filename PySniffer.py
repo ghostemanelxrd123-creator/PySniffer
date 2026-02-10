@@ -185,7 +185,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "PySniffer v1.5"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "PySniffer v1.7"))
         self.pushButton.setText(_translate("MainWindow", "Start"))
         self.pushButton_2.setText(_translate("MainWindow", "Stop"))
         self.checkBox.setText(_translate("MainWindow", "Dns"))
