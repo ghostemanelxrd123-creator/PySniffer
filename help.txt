@@ -1,0 +1,12 @@
+
+ Rus
+[+] Чтобы начать сниффить трафик в PySniffer нужно запустить его в терминале, запущенном из папки PySniffer v*, командой
+- sudo -E python3 PySniffer.py. После чего запустится сниффер, в нем нужно выбрать тип траффика который вы хотите отслеживать, После
+того как выбрали, следует запустить сниффинг кнопкой start, и в текстовой таблице начнет выводится пакетный трафик, его вы можете
+сохранить в формате .pcap.
+
+ Eng
+[+] To start sniffing traffic in PySniffer, launch it in a terminal launched from the PySniffer v* folders with the command
+- sudo -E python3 PySniffer.py . Then launch the sniffer and select the type of traffic you want to monitor.
+After turning it off, launch the sniffer by pressing the start button, and the packet traffic will begin to be displayed in a text table. 
+You can save it in .pcap format.

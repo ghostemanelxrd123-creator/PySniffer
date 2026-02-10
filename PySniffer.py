@@ -1,6 +1,7 @@
 import scapy, sys, os, subprocess
 from PyQt6 import QtCore, QtGui, QtWidgets
-from scapy.all import sniff, IP, TCP, UDP, DNS, Raw
+from scapy.all import wrpcap, sniff, IP, TCP, UDP, DNS, Raw
+import platform, webbrowser
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -199,6 +200,50 @@ class Ui_MainWindow(object):
         self.actionSave_logs.setText(_translate("MainWindow", "Save logs"))
         self.actionView_help.setText(_translate("MainWindow", "View help"))
         self.actionAbout_PySniff.setText(_translate("MainWindow", "About PySniff"))
+        self.menuHelp.triggered.connect(self.openhelp)
+        self.menuAbout.triggered.connect(self.openabout)
+        self.actionSave_logs.triggered.connect(self.savelogs)
+
+
+    def openhelp(self):
+        try:
+            path = os.path.dirname(os.path.abspath(__file__))
+            filepath = os.path.join(path, "help.txt")
+            if platform.system() == "Windows":
+                os.startfile(filepath)
+            elif platform.system() == "Linux":
+                subprocess.Popen(["sudo", "nano", filepath])
+        except os.FileNotFoundError:
+            self.plainTextEdit.appendPlainText("Error! File not found")
+        except Exception as v:
+            self.plainTextEdit.appendPlainText("Error!", str(v))
+
+    def openabout(self):
+        try:
+            path = os.path.dirname(os.path.abspath(__file__))
+            filepath = os.path.join(path, "about.txt")
+            if platform.system() == "Windows":
+                os.startfile(filepath)
+            elif platform.system() == "Linux":
+                subprocess.Popen(["sudo", "nano", filepath])
+        except os.FileNotFoundError:
+            self.plainTextEdit.appendPlainText("Error! File not found")
+        except Exception as v:
+            self.plainTextEdit.appendPlainText("Error!", str(v))
+
+    def savelogs(self):
+        if not self.threadsnif.pkts:
+            self.plainTextEdit.appendPlainText("Error! Nothing to save")
+            return
+        filename, i = QtWidgets.QFileDialog.getSaveFileName(
+            None, "Save PCAP", "", "PCAP Files (*.pcap);;All Files (*)"
+        )
+        if filename:
+            try:
+                wrpcap(filename, self.threadsnif.pkts)
+                self.plainTextEdit.appendPlainText(f"Successfully saved to {filename}")
+            except Exception as c:
+                self.plainTextEdit.appendPlainText("Error!", str(c))
 
 
 
@@ -215,9 +260,11 @@ class snifferthread(QtCore.QThread):
         self.showtcp = False
         self.showudp = False
         self.counter = 0
+        self.pkts = []
 
     def run(self):
         self.running = True
+        self.pkts = []
         filter_arg = self.filter if self.filter else None
         sniff(filter=filter_arg, prn=self.ppacket, stop_filter=lambda x: not self.running, store=0)
 
@@ -225,7 +272,10 @@ class snifferthread(QtCore.QThread):
         self.running = False
         self.counter = 0
 
+    
+
     def ppacket(self, pkt):
+        self.pkts.append(pkt)
         if not pkt.haslayer(IP):
             return
 
